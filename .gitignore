@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+plugin/dist/
+*.js.map
+
+# macOS app
+macos/build/
+macos/DerivedData/
+*.xcuserdata
+*.xcworkspace
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.log.*
+
+# Environment
+.env
+.env.local
+
+# Claude Code
+.claude/
+
+# Package archives
+*.zip
+*.dmg
