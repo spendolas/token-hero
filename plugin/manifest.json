@@ -1,0 +1,15 @@
+{
+  "name": "Token Hero",
+  "id": "token-hero-figma-plugin-001",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma"],
+  "ui": "dist/ui.html",
+  "networkAccess": {
+    "allowedDomains": ["http://localhost:7799", "ws://localhost:7799"],
+    "reasoning": "Connects to the Token Hero bridge app running locally via WebSocket to sync design tokens between Figma and source code."
+  }
+}

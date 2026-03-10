@@ -49,6 +49,9 @@ export type MessageType =
   | 'TOKEN_SNAPSHOT_RESULT'
   // Contact sheet
   | 'OPEN_CONTACT_SHEET'
+  // Folder picker
+  | 'PICK_FOLDER'
+  | 'PICK_FOLDER_RESULT'
   // Errors
   | 'ERROR';
 
@@ -58,6 +61,7 @@ export interface HelloPayload {
   pluginVersion: string;
   figmaFileKey: string;
   figmaFileName: string;
+  projectRoot?: string;
 }
 
 export interface HelloAckPayload {
@@ -244,6 +248,12 @@ export interface EffectToken {
   y: number;
   blur: number;
   spread: number;
+}
+
+// --- Folder picker ---
+
+export interface PickFolderResultPayload {
+  path: string | null;
 }
 
 // --- Contact sheet ---

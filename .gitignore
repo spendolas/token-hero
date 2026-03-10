@@ -6,7 +6,9 @@ plugin/dist/
 *.js.map
 
 # macOS app
+macos/.build/
 macos/build/
+macos/dist/
 macos/DerivedData/
 *.xcuserdata
 *.xcworkspace

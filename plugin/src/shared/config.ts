@@ -5,7 +5,8 @@
  * and token-hero.config.json on disk.
  */
 
-import type { PipelineConfig, TokenGroupName } from './protocol';
+import type { PipelineConfig } from './protocol';
+export type { TokenGroupName } from './protocol';
 
 export interface PluginConfig {
   schemaVersion: number;

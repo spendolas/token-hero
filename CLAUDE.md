@@ -6,14 +6,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Figma plugin + macOS menu bar app that bridges design tokens in Figma with their usage in code. It detects unbound properties in Figma and drift between Figma token values and code values, then proposes and applies fixes.
 
-**Project status:** Pre-implementation. `docs/CONTEXT.md` is the authoritative architecture spec (~2800 lines). `docs/token-hero-deep-features.md` covers feature prioritization.
+**Project status:** M1 complete. Plugin scaffold running in Figma, macOS bridge app compiles. `docs/CONTEXT.md` is the authoritative architecture spec (~2800 lines). `docs/token-hero-deep-features.md` covers feature prioritization.
 
 ## Repository Structure
 
 - `plugin/` — Figma plugin (TypeScript + React, built with esbuild)
-- `macos/` — macOS menu bar app (Swift + SwiftUI, Xcode project)
+- `macos/` — macOS menu bar app (Swift 6 + SwiftUI, SPM + WebSocketKit)
 - `docs/` — Architecture spec and feature documentation
 - `plugin/src/shared/protocol.ts` — Canonical bridge protocol type definitions
+
+## Build Commands
+
+### Figma Plugin
+```bash
+cd plugin && npm install && npm run build    # one-shot build
+cd plugin && npm run dev                      # watch mode
+cd plugin && npm run lint                     # ESLint
+```
+
+### macOS Bridge App
+```bash
+cd macos && swift build                       # debug build
+cd macos && swift build -c release            # release build
+cd macos && bash bundle.sh                    # build + assemble .app bundle
+cd macos && swift test                        # run tests
+```
+The `.app` bundle is output to `macos/dist/Token Hero.app`. esbuild target for plugin is `es2015` (Figma sandbox limitation).
 
 ## Two-Part Architecture
 
