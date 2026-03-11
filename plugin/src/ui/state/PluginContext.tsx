@@ -9,7 +9,7 @@ import type { PluginState, PluginAction, TabId, SelectionInfo, PushQueueItem } f
 import { reducer, initialState } from './reducer';
 import { DEFAULT_CONFIG, DEFAULT_UI_PREFERENCES, PLUGIN_VERSION } from '@shared/constants';
 import type { PluginConfig } from '@shared/config';
-import type { HelloAckPayload, MessageType, TokenSnapshotResultPayload, ApplyPatchPayload, PatchResultPayload, ErrorPayload, PickFolderResultPayload } from '@shared/protocol';
+import type { HelloAckPayload, MessageType, TokenSnapshotResultPayload, ApplyPatchPayload, PatchResultPayload, ErrorPayload, PickFolderResultPayload, GetComponentPropertiesPayload, ComponentPropertiesResultPayload } from '@shared/protocol';
 import type { FigmaStylesPayload } from '@shared/styleTypes';
 import { isSnapshotStale } from '../logic/snapshotCache';
 import * as pluginBridge from '../bridge/pluginBridge';
@@ -203,6 +203,22 @@ export function PluginProvider({ children }: { children: ReactNode }) {
               value: result.path,
             }).catch(() => {});
           }
+          break;
+        }
+        case 'GET_COMPONENT_PROPERTIES': {
+          const props = payload as GetComponentPropertiesPayload;
+          pluginBridge
+            .request<ComponentPropertiesResultPayload>(
+              'GET_COMPONENT_PROPERTIES',
+              { figmaNodeId: props.figmaNodeId },
+              props.timeoutMs ?? 10000,
+            )
+            .then((result) => {
+              wsBridge.sendMessage('COMPONENT_PROPERTIES_RESULT', result);
+            })
+            .catch(() => {
+              // Plugin couldn't process — bridge timeout will handle it
+            });
           break;
         }
       }

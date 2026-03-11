@@ -94,6 +94,21 @@ final class MessageRouter {
                 bridge: bridge
             )
 
+        case MessageType.getComponentProperties:
+            await ComponentPropertiesHandler.handle(
+                ws: ws,
+                message: message,
+                appState: appState,
+                bridge: bridge
+            )
+
+        case MessageType.componentPropertiesResult:
+            await ComponentPropertiesHandler.handleResult(
+                ws: ws,
+                message: message,
+                bridge: bridge
+            )
+
         default:
             await logger.log(.warn, "Unknown message type: \(message.type)")
             let errorPayload: JSONValue = .object([
