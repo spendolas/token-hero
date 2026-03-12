@@ -72,7 +72,8 @@ export async function handleGetComponentProperties(msg: ComponentPropertiesMsg) 
       variants,
     };
   } else {
-    const layers = await extractLayers(node as ComponentNode);
+    const comp = node as ComponentNode;
+    const layers = await extractLayers(comp);
     result = {
       nodeId: figmaNodeId,
       componentName,
@@ -80,6 +81,12 @@ export async function handleGetComponentProperties(msg: ComponentPropertiesMsg) 
       isComponentSet: false,
       layers,
     };
+    // If this component is a variant child of a set, include parent info
+    const parent = comp.parent;
+    if (parent && parent.type === 'COMPONENT_SET') {
+      result.parentSetId = parent.id;
+      result.parentSetName = parent.name;
+    }
   }
 
   figma.ui.postMessage({

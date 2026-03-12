@@ -17,7 +17,7 @@ const shared = {
 /** Read the HTML template and inject bundled JS at the <!-- SCRIPT --> marker. */
 function injectHTML(jsCode) {
   const template = readFileSync(resolve(__dirname, 'src/ui/ui.html'), 'utf8');
-  return template.replace('<!-- SCRIPT -->', `<script>${jsCode}</script>`);
+  return template.replace('<!-- SCRIPT -->', function() { return '<script>' + jsCode + '</script>'; });
 }
 
 /** Write dist/ui.html with injected JS bundle. */

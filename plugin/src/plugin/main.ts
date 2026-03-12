@@ -15,6 +15,7 @@ import { handleGetFileInfo } from './handlers/fileInfo';
 import { handleReadFigmaStyles } from './handlers/readStyles';
 import { handleGetStyleConsumers, clearConsumersCache } from './handlers/styleConsumers';
 import { handleGetComponentProperties } from './handlers/componentProperties';
+import { handleReadNodePluginData } from './handlers/nodeStorage';
 
 // ── Show UI ──────────────────────────────────────────────────
 
@@ -99,6 +100,9 @@ figma.ui.onmessage = (msg: { type: string; requestId?: string; [key: string]: un
       break;
     case 'GET_COMPONENT_PROPERTIES':
       handleGetComponentProperties(msg as Parameters<typeof handleGetComponentProperties>[0]);
+      break;
+    case 'READ_NODE_PLUGIN_DATA':
+      handleReadNodePluginData(msg as Parameters<typeof handleReadNodePluginData>[0]);
       break;
     case 'RESIZE':
       figma.ui.resize(

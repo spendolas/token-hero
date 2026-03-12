@@ -7,6 +7,7 @@ import { usePlugin } from './state/PluginContext';
 import { StatusPill } from './components/StatusPill';
 import { PlaceholderTab } from './tabs/PlaceholderTab';
 import { StylesTab } from './tabs/StylesTab';
+import { InspectorTab } from './tabs/InspectorTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { send } from './bridge/pluginBridge';
 import type { TabId } from './state/types';
@@ -67,9 +68,7 @@ export function App() {
       {/* Tab content */}
       <div className="tab-content">
         {state.activeTab === 'styles' && <StylesTab />}
-        {state.activeTab === 'inspector' && (
-          <PlaceholderTab title="Inspector" description="Select a layer to inspect token bindings." />
-        )}
+        {state.activeTab === 'inspector' && <InspectorTab />}
         {state.activeTab === 'audit' && (
           <PlaceholderTab title="Audit" description="Run an audit to find token divergences." />
         )}

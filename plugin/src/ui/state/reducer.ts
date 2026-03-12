@@ -25,6 +25,14 @@ export const initialState: PluginState = {
   configWrittenAt: null,
   pushQueue: [],
   pushInFlight: false,
+  // Inspector tab
+  inspectorData: null,
+  inspectorMapping: null,
+  inspectorLoading: false,
+  inspectorError: null,
+  inspectorNodeId: null,
+  inspectorIsVariantChild: false,
+  inspectorParentSetName: null,
 };
 
 export function reducer(state: PluginState, action: PluginAction): PluginState {
@@ -126,6 +134,45 @@ export function reducer(state: PluginState, action: PluginAction): PluginState {
 
     case 'SET_PROJECT_ROOT':
       return { ...state, projectRoot: action.projectRoot };
+
+    // Inspector tab
+    case 'SET_INSPECTOR_LOADING':
+      return {
+        ...state,
+        inspectorLoading: true,
+        inspectorError: null,
+        inspectorNodeId: action.nodeId,
+      };
+
+    case 'SET_INSPECTOR_DATA':
+      return {
+        ...state,
+        inspectorData: action.data,
+        inspectorMapping: action.mapping,
+        inspectorLoading: false,
+        inspectorError: null,
+        inspectorIsVariantChild: action.isVariantChild,
+        inspectorParentSetName: action.parentSetName,
+      };
+
+    case 'SET_INSPECTOR_ERROR':
+      return {
+        ...state,
+        inspectorLoading: false,
+        inspectorError: action.error,
+      };
+
+    case 'CLEAR_INSPECTOR':
+      return {
+        ...state,
+        inspectorData: null,
+        inspectorMapping: null,
+        inspectorLoading: false,
+        inspectorError: null,
+        inspectorNodeId: null,
+        inspectorIsVariantChild: false,
+        inspectorParentSetName: null,
+      };
 
     default:
       return state;

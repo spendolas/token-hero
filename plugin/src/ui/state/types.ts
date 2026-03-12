@@ -4,7 +4,7 @@
 
 import type { ConnectionStatus } from '../bridge/wsBridge';
 import type { PluginConfig, UIPreferences } from '@shared/config';
-import type { HelloAckPayload, TokenSnapshotResultPayload, ApplyPatchPayload } from '@shared/protocol';
+import type { HelloAckPayload, TokenSnapshotResultPayload, ApplyPatchPayload, ComponentPropertiesResultPayload } from '@shared/protocol';
 import type { FigmaStylesPayload } from '@shared/styleTypes';
 
 export type TabId = 'styles' | 'inspector' | 'audit' | 'settings';
@@ -42,6 +42,14 @@ export interface PluginState {
   configWrittenAt: number | null;
   pushQueue: PushQueueItem[];
   pushInFlight: boolean;
+  // Inspector tab
+  inspectorData: ComponentPropertiesResultPayload | null;
+  inspectorMapping: string | null;
+  inspectorLoading: boolean;
+  inspectorError: string | null;
+  inspectorNodeId: string | null;
+  inspectorIsVariantChild: boolean;
+  inspectorParentSetName: string | null;
 }
 
 export type PluginAction =
@@ -66,4 +74,9 @@ export type PluginAction =
   | { type: 'PUSH_SUCCEEDED'; id: string }
   | { type: 'PUSH_FAILED'; id: string; error: string }
   | { type: 'CLEAR_COMPLETED_PUSHES' }
-  | { type: 'SET_PROJECT_ROOT'; projectRoot: string };
+  | { type: 'SET_PROJECT_ROOT'; projectRoot: string }
+  // Inspector tab
+  | { type: 'SET_INSPECTOR_LOADING'; nodeId: string }
+  | { type: 'SET_INSPECTOR_DATA'; data: ComponentPropertiesResultPayload; mapping: string | null; isVariantChild: boolean; parentSetName: string | null }
+  | { type: 'SET_INSPECTOR_ERROR'; error: string }
+  | { type: 'CLEAR_INSPECTOR' };

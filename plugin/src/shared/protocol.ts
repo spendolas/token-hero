@@ -121,6 +121,8 @@ export interface ComponentPropertiesResultPayload {
   isComponentSet: boolean;
   layers?: Layer[];
   variants?: Record<string, { variantNodeId: string; layers: Layer[] }>;
+  parentSetId?: string;
+  parentSetName?: string;
 }
 
 export interface Layer {

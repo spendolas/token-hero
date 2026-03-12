@@ -25,6 +25,7 @@ interface PluginContextValue {
   refreshStyles: (force?: boolean) => void;
   pushToCode: (payload: ApplyPatchPayload, tokenNames: string[]) => void;
   pickFolder: () => void;
+  scanComponent: (nodeId: string) => void;
 }
 
 const PluginCtx = createContext<PluginContextValue | null>(null);
@@ -370,6 +371,65 @@ export function PluginProvider({ children }: { children: ReactNode }) {
     wsBridge.sendMessage('PICK_FOLDER', {});
   }, []);
 
+  const scanComponent = useCallback(
+    (nodeId: string) => {
+      dispatch({ type: 'SET_INSPECTOR_LOADING', nodeId: nodeId });
+      pluginBridge
+        .request<ComponentPropertiesResultPayload>(
+          'GET_COMPONENT_PROPERTIES',
+          { figmaNodeId: nodeId },
+          10000,
+        )
+        .then(function (result) {
+          // Guard stale: if the user changed selection while we were scanning, discard
+          if (stateRef.current.inspectorNodeId !== nodeId) return;
+
+          if (!result) {
+            dispatch({ type: 'SET_INSPECTOR_ERROR', error: 'Component not found' });
+            return;
+          }
+
+          // Read mapping from the appropriate node (parent set for variant children)
+          let mappingNodeId = nodeId;
+          if (result.parentSetId) {
+            mappingNodeId = result.parentSetId;
+          }
+
+          pluginBridge
+            .request<{ value: string | null }>(
+              'READ_NODE_PLUGIN_DATA',
+              { nodeId: mappingNodeId, key: 'mapping' },
+            )
+            .then(function (mappingResult) {
+              if (stateRef.current.inspectorNodeId !== nodeId) return;
+              dispatch({
+                type: 'SET_INSPECTOR_DATA',
+                data: result,
+                mapping: (mappingResult && mappingResult.value) ? mappingResult.value : null,
+                isVariantChild: !!result.parentSetId,
+                parentSetName: result.parentSetName || null,
+              });
+            })
+            .catch(function () {
+              if (stateRef.current.inspectorNodeId !== nodeId) return;
+              // Mapping read failed — still show data without mapping
+              dispatch({
+                type: 'SET_INSPECTOR_DATA',
+                data: result,
+                mapping: null,
+                isVariantChild: !!result.parentSetId,
+                parentSetName: result.parentSetName || null,
+              });
+            });
+        })
+        .catch(function () {
+          if (stateRef.current.inspectorNodeId !== nodeId) return;
+          dispatch({ type: 'SET_INSPECTOR_ERROR', error: 'Failed to scan component' });
+        });
+    },
+    [],
+  );
+
   const saveConfig = useCallback(
     (config: PluginConfig) => {
       dispatch({ type: 'SET_CONFIG', config });
@@ -390,7 +450,7 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <PluginCtx.Provider value={{ state, dispatch, setActiveTab, saveConfig, refreshStyles, pushToCode, pickFolder }}>
+    <PluginCtx.Provider value={{ state, dispatch, setActiveTab, saveConfig, refreshStyles, pushToCode, pickFolder, scanComponent }}>
       {children}
     </PluginCtx.Provider>
   );
