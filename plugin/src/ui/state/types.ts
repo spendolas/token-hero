@@ -4,7 +4,7 @@
 
 import type { ConnectionStatus } from '../bridge/wsBridge';
 import type { PluginConfig, UIPreferences } from '@shared/config';
-import type { HelloAckPayload, TokenSnapshotResultPayload, ApplyPatchPayload, ComponentPropertiesResultPayload } from '@shared/protocol';
+import type { HelloAckPayload, TokenSnapshotResultPayload, ApplyPatchPayload, ComponentPropertiesResultPayload, AuditFinding, DivergenceType } from '@shared/protocol';
 import type { FigmaStylesPayload } from '@shared/styleTypes';
 
 export type TabId = 'styles' | 'inspector' | 'audit' | 'settings';
@@ -50,6 +50,12 @@ export interface PluginState {
   inspectorNodeId: string | null;
   inspectorIsVariantChild: boolean;
   inspectorParentSetName: string | null;
+  // Audit tab
+  auditFindings: AuditFinding[];
+  auditGeneratedAt: number | null;
+  auditLoading: boolean;
+  auditError: string | null;
+  auditFixInFlight: string | null;
 }
 
 export type PluginAction =
@@ -79,4 +85,11 @@ export type PluginAction =
   | { type: 'SET_INSPECTOR_LOADING'; nodeId: string }
   | { type: 'SET_INSPECTOR_DATA'; data: ComponentPropertiesResultPayload; mapping: string | null; isVariantChild: boolean; parentSetName: string | null }
   | { type: 'SET_INSPECTOR_ERROR'; error: string }
-  | { type: 'CLEAR_INSPECTOR' };
+  | { type: 'CLEAR_INSPECTOR' }
+  // Audit tab
+  | { type: 'SET_AUDIT_FINDINGS'; findings: AuditFinding[]; generatedAt: number }
+  | { type: 'CLEAR_AUDIT' }
+  | { type: 'SET_AUDIT_ERROR'; error: string }
+  | { type: 'AUDIT_FIX_STARTED'; findingKey: string }
+  | { type: 'AUDIT_FIX_DONE' }
+  | { type: 'REMOVE_FINDING'; layerId: string; divergenceType: DivergenceType };

@@ -41,6 +41,7 @@ export type MessageType =
   | 'APPLY_PATCH'
   | 'PATCH_RESULT'
   // Flow 3: Audit result ingestion
+  | 'RUN_AUDIT'
   | 'AUDIT_RESULTS'
   // Flow 4: Scoped audit trigger
   | 'RUN_SCOPED_AUDIT'

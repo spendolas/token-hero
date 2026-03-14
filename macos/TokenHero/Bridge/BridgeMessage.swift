@@ -126,6 +126,7 @@ enum MessageType {
     static let componentPropertiesResult = "COMPONENT_PROPERTIES_RESULT"
     static let applyPatch = "APPLY_PATCH"
     static let patchResult = "PATCH_RESULT"
+    static let runAudit = "RUN_AUDIT"
     static let auditResults = "AUDIT_RESULTS"
     static let runScopedAudit = "RUN_SCOPED_AUDIT"
     static let getTokenSnapshot = "GET_TOKEN_SNAPSHOT"

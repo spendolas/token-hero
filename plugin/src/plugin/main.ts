@@ -16,6 +16,8 @@ import { handleReadFigmaStyles } from './handlers/readStyles';
 import { handleGetStyleConsumers, clearConsumersCache } from './handlers/styleConsumers';
 import { handleGetComponentProperties } from './handlers/componentProperties';
 import { handleReadNodePluginData } from './handlers/nodeStorage';
+import { handleWriteNodePluginData } from './handlers/writeNodePluginData';
+import { handleExecuteSuggestedFix } from './handlers/executeFix';
 
 // ── Show UI ──────────────────────────────────────────────────
 
@@ -103,6 +105,12 @@ figma.ui.onmessage = (msg: { type: string; requestId?: string; [key: string]: un
       break;
     case 'READ_NODE_PLUGIN_DATA':
       handleReadNodePluginData(msg as Parameters<typeof handleReadNodePluginData>[0]);
+      break;
+    case 'WRITE_NODE_PLUGIN_DATA':
+      handleWriteNodePluginData(msg as Parameters<typeof handleWriteNodePluginData>[0]);
+      break;
+    case 'EXECUTE_SUGGESTED_FIX':
+      handleExecuteSuggestedFix(msg as Parameters<typeof handleExecuteSuggestedFix>[0]);
       break;
     case 'RESIZE':
       figma.ui.resize(

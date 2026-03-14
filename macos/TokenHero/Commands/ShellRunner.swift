@@ -8,7 +8,7 @@ struct ShellResult: Sendable {
 }
 
 enum ShellRunner {
-    private static let maxOutputBytes = 10 * 1024 // 10KB cap
+    private static let maxOutputBytes = 256 * 1024 // 256KB cap — audit output for 29 components
 
     static func run(command: String, workingDirectory: String) async throws -> ShellResult {
         try await withCheckedThrowingContinuation { continuation in

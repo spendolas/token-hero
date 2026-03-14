@@ -33,6 +33,12 @@ export const initialState: PluginState = {
   inspectorNodeId: null,
   inspectorIsVariantChild: false,
   inspectorParentSetName: null,
+  // Audit tab
+  auditFindings: [],
+  auditGeneratedAt: null,
+  auditLoading: false,
+  auditError: null,
+  auditFixInFlight: null,
 };
 
 export function reducer(state: PluginState, action: PluginAction): PluginState {
@@ -172,6 +178,47 @@ export function reducer(state: PluginState, action: PluginAction): PluginState {
         inspectorNodeId: null,
         inspectorIsVariantChild: false,
         inspectorParentSetName: null,
+      };
+
+    // Audit tab
+    case 'SET_AUDIT_FINDINGS':
+      return {
+        ...state,
+        auditFindings: action.findings,
+        auditGeneratedAt: action.generatedAt,
+        auditLoading: false,
+        auditError: null,
+      };
+
+    case 'CLEAR_AUDIT':
+      return {
+        ...state,
+        auditFindings: [],
+        auditGeneratedAt: null,
+        auditLoading: false,
+        auditError: null,
+        auditFixInFlight: null,
+      };
+
+    case 'SET_AUDIT_ERROR':
+      return {
+        ...state,
+        auditLoading: false,
+        auditError: action.error,
+      };
+
+    case 'AUDIT_FIX_STARTED':
+      return { ...state, auditFixInFlight: action.findingKey };
+
+    case 'AUDIT_FIX_DONE':
+      return { ...state, auditFixInFlight: null };
+
+    case 'REMOVE_FINDING':
+      return {
+        ...state,
+        auditFindings: state.auditFindings.filter(function (f) {
+          return !(f.layerId === action.layerId && f.divergenceType === action.divergenceType);
+        }),
       };
 
     default:

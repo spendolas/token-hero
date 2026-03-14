@@ -405,6 +405,7 @@
       cursor: pointer;
       white-space: nowrap;
       padding: 0;
+      margin-left: auto;
     }
 
     .refresh-indicator:hover {
@@ -811,6 +812,212 @@
       white-space: nowrap;
     }
 
+    /* ── Audit tab ───────────────────────────────────────── */
+
+    .audit-tab {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .audit-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      text-align: center;
+    }
+
+    .audit-empty-text {
+      opacity: 0.5;
+      font-size: 11px;
+    }
+
+    .audit-summary {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 0 6px;
+      font-size: 10px;
+    }
+
+    .audit-summary-count {
+      font-weight: 600;
+    }
+
+    .audit-summary-fixable {
+      color: #22c55e;
+    }
+
+    .audit-summary-time {
+      opacity: 0.4;
+      margin-left: auto;
+    }
+
+    .audit-error {
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: rgba(248, 113, 113, 0.1);
+      color: #ef4444;
+    }
+
+    .audit-type-section {
+      margin-bottom: 2px;
+    }
+
+    .audit-type-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .audit-type-toggle {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 2px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      color: inherit;
+      text-align: left;
+    }
+
+    .audit-type-toggle:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 4px;
+    }
+
+    .audit-type-chevron {
+      width: 12px;
+      text-align: center;
+      opacity: 0.4;
+      font-size: 10px;
+    }
+
+    .audit-type-label {
+      font-weight: 500;
+    }
+
+    .audit-type-count {
+      opacity: 0.4;
+      font-size: 10px;
+    }
+
+    .audit-fix-all-btn {
+      flex-shrink: 0;
+      padding: 2px 8px;
+      font-size: 9px;
+    }
+
+    .audit-type-body {
+      padding: 0 0 4px;
+    }
+
+    .audit-finding-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 2px 3px 20px;
+      font-size: 10px;
+    }
+
+    .audit-finding-row:hover {
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 4px;
+    }
+
+    .audit-finding-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .audit-finding-component {
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .audit-finding-layer {
+      opacity: 0.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .audit-finding-values {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 9px;
+      max-width: 100px;
+    }
+
+    .audit-finding-expected {
+      color: #22c55e;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+    }
+
+    .audit-finding-actual {
+      color: #ef4444;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+    }
+
+    .audit-finding-value {
+      opacity: 0.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+    }
+
+    .audit-finding-action {
+      flex-shrink: 0;
+      width: 36px;
+      text-align: right;
+    }
+
+    .audit-fix-btn {
+      padding: 1px 6px;
+      font-size: 9px;
+    }
+
+    .audit-finding-manual {
+      opacity: 0.3;
+      font-size: 9px;
+    }
+
+    .audit-run-btn {
+      padding: 4px 16px;
+      font-size: 11px;
+    }
+
+    .audit-rerun-btn {
+      margin-left: auto;
+      padding: 2px 8px;
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+
     /* ── Dark mode ──────────────────────────────────────── */
 
     @media (prefers-color-scheme: dark) {
@@ -941,6 +1148,31 @@
 
       .inspector-badge-bound {
         color: #4ade80;
+      }
+
+      .audit-type-toggle:hover {
+        background: rgba(175, 175, 175, 0.08);
+      }
+
+      .audit-finding-row:hover {
+        background: rgba(175, 175, 175, 0.04);
+      }
+
+      .audit-summary-fixable {
+        color: #4ade80;
+      }
+
+      .audit-finding-expected {
+        color: #4ade80;
+      }
+
+      .audit-finding-actual {
+        color: #f87171;
+      }
+
+      .audit-error {
+        background: rgba(248, 113, 113, 0.1);
+        color: #f87171;
       }
     }
   </style>

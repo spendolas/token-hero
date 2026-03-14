@@ -2,6 +2,69 @@ import Foundation
 import WebSocketKit
 
 enum AuditHandler {
+    /// Full audit — runs auditCommand with no arguments.
+    static func handleFullAudit(
+        ws: WebSocket,
+        message: BridgeMessage,
+        appState: AppState,
+        bridge: WebSocketBridge
+    ) async {
+        let logger = TokenHeroLogger.shared
+
+        guard let projectRoot = await MainActor.run(body: { appState.projectRoot }),
+              let config = await MainActor.run(body: { appState.currentConfig }) else {
+            await sendError(ws: ws, bridge: bridge, id: message.id, message: "No project folder or config")
+            return
+        }
+
+        guard let auditCommand = config.pipeline.auditCommand, !auditCommand.isEmpty else {
+            await sendError(ws: ws, bridge: bridge, id: message.id, message: "No audit command configured")
+            return
+        }
+
+        await MainActor.run { appState.setRunning(command: auditCommand) }
+        await logger.log(.run, auditCommand)
+
+        do {
+            let result = try await ShellRunner.run(command: auditCommand, workingDirectory: projectRoot)
+
+            let success = result.exitCode == 0
+            if success {
+                await logger.log(.ok, "audit \u{2014} exit 0 (\(String(format: "%.1f", Double(result.durationMs) / 1000))s)")
+            } else {
+                await logger.log(.error, "audit \u{2014} exit \(result.exitCode)")
+            }
+            await MainActor.run { appState.setRunComplete(command: auditCommand, success: success, durationMs: result.durationMs) }
+
+            if success {
+                if let findingsData = result.stdout.data(using: .utf8),
+                   let findingsObj = try? JSONSerialization.jsonObject(with: findingsData) {
+                    let findings = TokenSnapshotHandler_jsonToValue(findingsObj)
+
+                    let auditPayload: JSONValue = .object([
+                        "source": .string("binding"),
+                        "generatedAt": .double(Date().timeIntervalSince1970 * 1000),
+                        "replaceExisting": .bool(true),
+                        "findings": findings,
+                    ])
+
+                    let response = BridgeMessage(type: MessageType.auditResults, payload: auditPayload)
+                    await bridge.send(to: ws, message: response)
+                    await logger.log(.info, "AUDIT_RESULTS sent to plugin")
+                } else {
+                    await sendError(ws: ws, bridge: bridge, id: message.id, message: "Failed to parse audit output as JSON")
+                }
+            } else {
+                await sendError(ws: ws, bridge: bridge, id: message.id, message: "Audit command failed with exit code \(result.exitCode)")
+            }
+        } catch {
+            await logger.log(.error, "Audit failed: \(error.localizedDescription)")
+            await MainActor.run { appState.setRunComplete(command: auditCommand, success: false, durationMs: 0) }
+            await sendError(ws: ws, bridge: bridge, id: message.id, message: error.localizedDescription)
+        }
+    }
+
+    /// Scoped audit — runs auditCommand --component <jsonKey>.
     static func handle(
         ws: WebSocket,
         message: BridgeMessage,

@@ -1,5 +1,5 @@
 /**
- * FilterBar — segmented filter control + refresh indicator.
+ * FilterBar — segmented filter control.
  */
 
 import type { FilterMode } from '@shared/styleTypes';
@@ -14,11 +14,9 @@ const FILTERS: { mode: FilterMode; label: string }[] = [
 interface FilterBarProps {
   current: FilterMode;
   onChange: (mode: FilterMode) => void;
-  refreshLabel: string | null;
-  onRefresh: () => void;
 }
 
-export function FilterBar({ current, onChange, refreshLabel, onRefresh }: FilterBarProps) {
+export function FilterBar({ current, onChange }: FilterBarProps) {
   return (
     <div className="filter-bar">
       <div className="segmented filter-segmented">
@@ -32,11 +30,6 @@ export function FilterBar({ current, onChange, refreshLabel, onRefresh }: Filter
           </button>
         ))}
       </div>
-      {refreshLabel && (
-        <button className="refresh-indicator" onClick={onRefresh}>
-          {refreshLabel}
-        </button>
-      )}
     </div>
   );
 }

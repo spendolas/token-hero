@@ -62,6 +62,14 @@ final class MessageRouter {
                 bridge: bridge
             )
 
+        case MessageType.runAudit:
+            await AuditHandler.handleFullAudit(
+                ws: ws,
+                message: message,
+                appState: appState,
+                bridge: bridge
+            )
+
         case MessageType.runScopedAudit:
             await AuditHandler.handle(
                 ws: ws,

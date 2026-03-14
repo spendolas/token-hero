@@ -5,7 +5,7 @@
 import { useRef, useEffect } from 'react';
 import { usePlugin } from './state/PluginContext';
 import { StatusPill } from './components/StatusPill';
-import { PlaceholderTab } from './tabs/PlaceholderTab';
+import { AuditTab } from './tabs/AuditTab';
 import { StylesTab } from './tabs/StylesTab';
 import { InspectorTab } from './tabs/InspectorTab';
 import { SettingsTab } from './tabs/SettingsTab';
@@ -69,9 +69,7 @@ export function App() {
       <div className="tab-content">
         {state.activeTab === 'styles' && <StylesTab />}
         {state.activeTab === 'inspector' && <InspectorTab />}
-        {state.activeTab === 'audit' && (
-          <PlaceholderTab title="Audit" description="Run an audit to find token divergences." />
-        )}
+        {state.activeTab === 'audit' && <AuditTab />}
         {state.activeTab === 'settings' && <SettingsTab />}
       </div>
     </div>

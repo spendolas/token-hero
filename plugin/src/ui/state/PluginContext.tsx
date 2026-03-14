@@ -9,11 +9,43 @@ import type { PluginState, PluginAction, TabId, SelectionInfo, PushQueueItem } f
 import { reducer, initialState } from './reducer';
 import { DEFAULT_CONFIG, DEFAULT_UI_PREFERENCES, PLUGIN_VERSION } from '@shared/constants';
 import type { PluginConfig } from '@shared/config';
-import type { HelloAckPayload, MessageType, TokenSnapshotResultPayload, ApplyPatchPayload, PatchResultPayload, ErrorPayload, PickFolderResultPayload, GetComponentPropertiesPayload, ComponentPropertiesResultPayload } from '@shared/protocol';
+import type { HelloAckPayload, MessageType, TokenSnapshotResultPayload, ApplyPatchPayload, PatchResultPayload, ErrorPayload, PickFolderResultPayload, GetComponentPropertiesPayload, ComponentPropertiesResultPayload, AuditResultsPayload, AuditFinding, DivergenceType } from '@shared/protocol';
 import type { FigmaStylesPayload } from '@shared/styleTypes';
 import { isSnapshotStale } from '../logic/snapshotCache';
+import { normalizeSnapshot } from '../logic/normalizeSnapshot';
 import * as pluginBridge from '../bridge/pluginBridge';
 import * as wsBridge from '../bridge/wsBridge';
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function executeFixesSerially(
+  findings: AuditFinding[],
+  idx: number,
+  divergenceType: DivergenceType,
+  dispatch: React.Dispatch<PluginAction>,
+) {
+  if (idx >= findings.length) {
+    dispatch({ type: 'AUDIT_FIX_DONE' });
+    return;
+  }
+  const finding = findings[idx];
+  dispatch({ type: 'AUDIT_FIX_STARTED', findingKey: finding.layerId + ':' + finding.divergenceType });
+  pluginBridge
+    .request<{ success: boolean; error: string | null }>(
+      'EXECUTE_SUGGESTED_FIX',
+      { layerId: finding.layerId, fix: finding.suggestedFix },
+      15000,
+    )
+    .then(function (result) {
+      if (result && result.success) {
+        dispatch({ type: 'REMOVE_FINDING', layerId: finding.layerId, divergenceType: divergenceType });
+      }
+      executeFixesSerially(findings, idx + 1, divergenceType, dispatch);
+    })
+    .catch(function () {
+      executeFixesSerially(findings, idx + 1, divergenceType, dispatch);
+    });
+}
 
 // ── Context ──────────────────────────────────────────────────
 
@@ -26,6 +58,9 @@ interface PluginContextValue {
   pushToCode: (payload: ApplyPatchPayload, tokenNames: string[]) => void;
   pickFolder: () => void;
   scanComponent: (nodeId: string) => void;
+  executeFix: (finding: AuditFinding) => void;
+  executeFixAll: (divergenceType: DivergenceType) => void;
+  runAudit: () => void;
 }
 
 const PluginCtx = createContext<PluginContextValue | null>(null);
@@ -206,6 +241,35 @@ export function PluginProvider({ children }: { children: ReactNode }) {
           }
           break;
         }
+        case 'AUDIT_RESULTS': {
+          const auditPayload = payload as AuditResultsPayload;
+          if (auditPayload.replaceExisting) {
+            dispatch({ type: 'CLEAR_AUDIT' });
+          }
+          dispatch({
+            type: 'SET_AUDIT_FINDINGS',
+            findings: auditPayload.findings,
+            generatedAt: auditPayload.generatedAt,
+          });
+          // Persist findings to pluginData per component
+          const byNode: Record<string, AuditFinding[]> = {};
+          for (let i = 0; i < auditPayload.findings.length; i++) {
+            const f = auditPayload.findings[i];
+            if (!byNode[f.figmaNodeId]) {
+              byNode[f.figmaNodeId] = [];
+            }
+            byNode[f.figmaNodeId].push(f);
+          }
+          const nodeIds = Object.keys(byNode);
+          for (let i = 0; i < nodeIds.length; i++) {
+            pluginBridge.request('WRITE_NODE_PLUGIN_DATA', {
+              nodeId: nodeIds[i],
+              key: 'auditFindings',
+              value: JSON.stringify(byNode[nodeIds[i]]),
+            }).catch(function () {});
+          }
+          break;
+        }
         case 'GET_COMPONENT_PROPERTIES': {
           const props = payload as GetComponentPropertiesPayload;
           pluginBridge
@@ -273,9 +337,10 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsub = wsBridge.onMessage((type: MessageType, payload: unknown) => {
       if (type === 'TOKEN_SNAPSHOT_RESULT') {
+        const normalized = normalizeSnapshot(payload as TokenSnapshotResultPayload);
         dispatch({
           type: 'SET_CODE_SNAPSHOT',
-          snapshot: payload as TokenSnapshotResultPayload,
+          snapshot: normalized,
           fetchedAt: Date.now(),
         });
       }
@@ -430,6 +495,100 @@ export function PluginProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // ── Audit fix execution ──────────────────────────────────
+
+  const executeFix = useCallback(
+    function (finding: AuditFinding) {
+      if (!finding.suggestedFix) return;
+      const fix = finding.suggestedFix;
+      const key = finding.layerId + ':' + finding.divergenceType;
+      dispatch({ type: 'AUDIT_FIX_STARTED', findingKey: key });
+
+      if (fix.op === 'patch_json') {
+        // Use existing Flow 2 push queue
+        pushToCode(
+          { operations: fix.patch, runAfter: [] },
+          [finding.expectedToken || finding.layerName],
+        );
+        dispatch({ type: 'AUDIT_FIX_DONE' });
+        dispatch({ type: 'REMOVE_FINDING', layerId: finding.layerId, divergenceType: finding.divergenceType });
+      } else {
+        // rebind or create_token — execute via plugin main thread
+        pluginBridge
+          .request<{ success: boolean; error: string | null }>(
+            'EXECUTE_SUGGESTED_FIX',
+            { layerId: finding.layerId, fix: fix },
+            15000,
+          )
+          .then(function (result) {
+            dispatch({ type: 'AUDIT_FIX_DONE' });
+            if (result && result.success) {
+              dispatch({ type: 'REMOVE_FINDING', layerId: finding.layerId, divergenceType: finding.divergenceType });
+            } else {
+              dispatch({ type: 'SET_AUDIT_ERROR', error: (result && result.error) || 'Fix failed' });
+            }
+          })
+          .catch(function () {
+            dispatch({ type: 'AUDIT_FIX_DONE' });
+            dispatch({ type: 'SET_AUDIT_ERROR', error: 'Fix request failed' });
+          });
+      }
+    },
+    [pushToCode],
+  );
+
+  const executeFixAll = useCallback(
+    function (divergenceType: DivergenceType) {
+      const s = stateRef.current;
+      const findings = s.auditFindings.filter(function (f) {
+        return f.divergenceType === divergenceType && f.suggestedFix;
+      });
+      if (findings.length === 0) return;
+
+      // Separate patch_json fixes from plugin API fixes
+      const patchFindings: AuditFinding[] = [];
+      const pluginApiFindings: AuditFinding[] = [];
+      for (let i = 0; i < findings.length; i++) {
+        if (findings[i].suggestedFix && findings[i].suggestedFix!.op === 'patch_json') {
+          patchFindings.push(findings[i]);
+        } else {
+          pluginApiFindings.push(findings[i]);
+        }
+      }
+
+      // Merge patch_json fixes into a single APPLY_PATCH
+      if (patchFindings.length > 0) {
+        const allOps: Array<{ op: string; path: string; value?: unknown }> = [];
+        const names: string[] = [];
+        for (let i = 0; i < patchFindings.length; i++) {
+          const fix = patchFindings[i].suggestedFix!;
+          if (fix.op === 'patch_json') {
+            for (let j = 0; j < fix.patch.length; j++) {
+              allOps.push(fix.patch[j]);
+            }
+            names.push(patchFindings[i].expectedToken || patchFindings[i].layerName);
+          }
+        }
+        pushToCode({ operations: allOps, runAfter: [] }, names);
+        for (let i = 0; i < patchFindings.length; i++) {
+          dispatch({ type: 'REMOVE_FINDING', layerId: patchFindings[i].layerId, divergenceType: divergenceType });
+        }
+      }
+
+      // Execute plugin API fixes serially
+      if (pluginApiFindings.length > 0) {
+        executeFixesSerially(pluginApiFindings, 0, divergenceType, dispatch);
+      }
+    },
+    [pushToCode],
+  );
+
+  const runAudit = useCallback(function () {
+    if (wsBridge.getStatus() !== 'connected') return;
+    dispatch({ type: 'CLEAR_AUDIT' });
+    wsBridge.sendMessage('RUN_AUDIT', {});
+  }, []);
+
   const saveConfig = useCallback(
     (config: PluginConfig) => {
       dispatch({ type: 'SET_CONFIG', config });
@@ -450,7 +609,7 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <PluginCtx.Provider value={{ state, dispatch, setActiveTab, saveConfig, refreshStyles, pushToCode, pickFolder, scanComponent }}>
+    <PluginCtx.Provider value={{ state, dispatch, setActiveTab, saveConfig, refreshStyles, pushToCode, pickFolder, scanComponent, executeFix, executeFixAll, runAudit }}>
       {children}
     </PluginCtx.Provider>
   );

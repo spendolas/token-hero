@@ -5,7 +5,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { usePlugin } from '../state/PluginContext';
 import { diffAll } from '../logic/diffEngine';
-import { timeAgo } from '../logic/timeAgo';
 import { buildPatchForToken, buildPatchForSection, buildPatchForAll } from '../logic/patchBuilder';
 import { FilterBar } from '../components/FilterBar';
 import { SectionGroup } from '../components/SectionGroup';
@@ -105,10 +104,6 @@ export function StylesTab() {
 
   const hasCodeData = state.codeSnapshot !== null;
 
-  const refreshLabel = hasCodeData && state.codeSnapshotFetchedAt
-    ? `\u21BB ${timeAgo(state.codeSnapshotFetchedAt)}`
-    : null;
-
   const totalDrifted = sections.reduce((sum, s) => sum + s.driftedCount, 0);
 
   const handlePushToken = useCallback((token: DiffedToken) => {
@@ -155,8 +150,6 @@ export function StylesTab() {
       <FilterBar
         current={filterMode}
         onChange={setFilterMode}
-        refreshLabel={refreshLabel}
-        onRefresh={() => refreshStyles(true)}
       />
 
       {connected && totalDrifted > 0 && (
